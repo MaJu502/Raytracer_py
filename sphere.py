@@ -3,7 +3,15 @@ Universidad del Valle de Guatemala
 @author Marco Jurado 20308
     sphere.py
 """
-from gl import *
+from ray import *
+import glMatematica
+
+def color(r,g,b):
+    # number between 0 and 255 for each input
+    r = int(r *255)
+    g = int(g *255)
+    b = int(b *255)
+    return bytes([b, g, r])
 
 class sphere:
     #init con center, radio y color
@@ -12,14 +20,14 @@ class sphere:
     
     #parametros de origen y dirección de los rays
     def rays_intersection(self, origin, direct):
-        temp_size = (self.center - origin).size()
-        temp = (self.center - origin)**2 - ( (self.center - origin) * direct )**2
+        tempResta = glMatematica.Resta(self.center,origin)
+        temp = (tempResta)**2 - ( glMatematica.ProdPunto( tempResta, direct) )**2
 
         if self.radius**2 < temp:
             #si el cuadrado del radio es menor a temp
             return None  # no es posible
         
-        thc = (self.radius**2 - d2)**1/2
+        thc = (self.radius**2 - ( glMatematica.largoVector( glMatematica.Resta(self.center, origin) )**2 - glMatematica.ProdPunto(( glMatematica.Resta(self.center, origin) ), direct)**2 ) )**1/2
         t0 = ( (self.center - origin) * direct ) - thc
         t1 = ( (self.center - origin) * direct ) + thc
 
