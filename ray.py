@@ -90,12 +90,12 @@ class Raytracer:
                 self.glVertex(x, y, temp_clr)
 
     def cast_ray(self,orig, direction):
+        retorno_clr = self.background_color
         for x in self.items:
             #por cada item que se tenga que renderizar
             if x.rays_intersection(orig,direction):
                 #si devuelve true
                 retorno_clr = x.color #cambia el color de la esfera
-
         return retorno_clr
 
     def glFinish(self,filename):

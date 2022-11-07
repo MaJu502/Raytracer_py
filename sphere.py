@@ -21,17 +21,17 @@ class sphere:
     #parametros de origen y dirección de los rays
     def rays_intersection(self, origin, direct):
         tempResta = glMatematica.Resta(self.center,origin)
-        temp = (tempResta)**2 - ( glMatematica.ProdPunto( tempResta, direct) )**2
+        temp = (glMatematica.largoVector(tempResta))**2 - ( glMatematica.ProdPunto( tempResta, direct) )**2
 
-        if self.radius**2 < temp:
+        if temp > self.radius**2:
+            
             #si el cuadrado del radio es menor a temp
-            return None  # no es posible
+            return False  # no es posible
         
         thc = (self.radius**2 - ( glMatematica.largoVector( glMatematica.Resta(self.center, origin) )**2 - glMatematica.ProdPunto(( glMatematica.Resta(self.center, origin) ), direct)**2 ) )**1/2
-        t0 = ( (self.center - origin) * direct ) - thc
-        t1 = ( (self.center - origin) * direct ) + thc
+        t0 = glMatematica.ProdPunto( (glMatematica.Resta(self.center,origin)),direct ) - thc
+        t1 = glMatematica.ProdPunto( (glMatematica.Resta(self.center,origin)),direct ) + thc
 
-        if t0 < 0 :
-            t0 = t1
-        if t0 < 0:
-            return None
+        if t0 < 0 or t1 < 1:
+            return False
+        return True
