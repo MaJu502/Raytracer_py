@@ -15,12 +15,13 @@ def color(r,g,b):
     
 
 class Light(object):
-    def __init__(self, posicion=V3(0,0,0), intensity=1):
+    def __init__(self, posicion, intensity, clr):
         self.position = posicion
         self.intensity = intensity
+        self.colores = clr
 
 class Materiales(object):
-    def __init__(self, diff=color(1,1,1), albedo=(1, 0), spec=0):
+    def __init__(self, diff, albedo, spec):
         self.diffuse = diff
         self.albedo = albedo
         self.spec = spec
@@ -53,7 +54,7 @@ class sphere:
         if t0 < 0 or t1 < 1:
             return None
         
-        temp_hit = glMatematica.Suma(origin, glMatematica.ProdPunto( direct, t0 ))
+        temp_hit = glMatematica.Suma(origin, glMatematica.Prodv3_other( direct, t0 ))
         norm = glMatematica.Normalizar( glMatematica.Resta( temp_hit, self.center ) )
         #ahora se devuelven distancia, punto y normal
         return Intersect( distancia=t0, point=temp_hit,normales=norm)

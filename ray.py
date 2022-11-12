@@ -45,14 +45,14 @@ def coordenadasbaricentricas(A,B,C,k):
     )
 
 #change
-def allbarycentric(A, B, C, bbox_min, bbox_max):
+"""def allbarycentric(A, B, C, bbox_min, bbox_max):
   barytransform = numpy.linalg.inv([[A.x, B.x, C.x], [A.y,B.y,C.y], [1, 1, 1]])
   grid = numpy.mgrid[bbox_min.x:bbox_max.x, bbox_min.y:bbox_max.y].reshape(2,-1)
   grid = numpy.vstack((grid, numpy.ones((1, grid.shape[1]))))
   barycoords = numpy.dot(barytransform, grid)
   # barycoords = barycoords[:,numpy.all(barycoords>=0, axis=0)]
   barycoords = numpy.transpose(barycoords)
-  return barycoords
+  return barycoords"""
 
 
 class Raytracer:
@@ -66,7 +66,7 @@ class Raytracer:
         self.pixels = []
         self.items = []
         self.light = None
-        
+
         self.glClear()
 
     def glClear(self):
@@ -91,14 +91,50 @@ class Raytracer:
                 temp_clr = self.cast_ray(V3(0, 0, 0), direction)
                 self.glVertex(x, y, temp_clr)
 
-    def cast_ray(self,orig, direction):
-        retorno_clr = self.background_color
+    def inteseccion(self, orig, direct):
+        zBuffed = 99999 #simulando float('inf')
+        mat, inter = None,None
+
         for x in self.items:
-            #por cada item que se tenga que renderizar
-            if x.rays_intersection(orig,direction):
-                #si devuelve true
-                retorno_clr = x.color #cambia el color de la esfera
-        return retorno_clr
+            temp_hit = x.rays_intersection(orig,direct)
+            if temp_hit and temp_hit.distancia < zBuffed:
+                #si existe una interseccion y es menor al buffer
+                zBuffed = temp_hit.distancia
+                mat = x.material
+                inter = temp_hit
+        return mat,inter
+
+    def reflect(self, I, N):
+        return glMatematica.Normalizar( glMatematica.Resta( glMatematica.Prodv3_other( I, -1 ), glMatematica.Prodv3_other( N,( glMatematica.ProdPunto( glMatematica.Prodv3_other( I, -1 ), N ) * 2 ) ) ) )
+    
+    def cast_ray(self, origin, direction):
+        material, intersect = self.inteseccion(origin, direction)
+        
+        if material is None:
+            return self.background_color
+        
+        light_dir = glMatematica.Normalizar(glMatematica.Resta(self.light.position, intersect.point))
+        
+        # Diffuse component
+        diffuse_intensity = glMatematica.ProdPunto(light_dir, intersect.normales)
+        diffuse_0 = int(material.diffuse[0] * diffuse_intensity * material.albedo[0])
+        diffuse_1 = int(material.diffuse[1] * diffuse_intensity * material.albedo[0])
+        diffuse_2 = int(material.diffuse[2] * diffuse_intensity * material.albedo[0])
+       
+        # Specular component
+        light_reflection = self.reflect(light_dir, intersect.normales)
+        reflection_intensity = max(0, glMatematica.ProdPunto(light_reflection, direction))
+        specular_intensity = self.light.intensity * (reflection_intensity ** material.spec)
+        specular_0 = int(self.light.colores[0] * specular_intensity * material.albedo[1])
+        specular_1 = int(self.light.colores[1] * specular_intensity * material.albedo[1])
+        specular_2 = int(self.light.colores[2] * specular_intensity * material.albedo[1])
+
+        #ahora tengo que armar el color que se retorna
+        b = diffuse_0 + specular_0
+        g = diffuse_1 + specular_1
+        r = diffuse_2 + specular_2
+
+        return color(r/255,g/255,b/255)
 
     def glFinish(self,filename):
         op = open(filename, 'bw')
