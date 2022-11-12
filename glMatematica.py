@@ -51,6 +51,14 @@ def Multiplicacion(a,k):
 def largoVector(a):
     return (a.x**2 + a.y**2 + a.z**2)**0.5
 
+def Prodv3_other(a,b):
+    #donde b no es un v3
+    return V3(
+        a.x * b,
+        a.y * b,
+        a.z * b
+      )
+
 def multiplicarMatriz44(a,b):
     """adaptado con referencia a la página web donde se define un ejemplo de multiplicacion de matriz sin numpy
     https://www.knowprogram.com/python/python-matrix-multiplication-without-numpy/
