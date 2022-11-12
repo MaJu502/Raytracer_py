@@ -65,6 +65,8 @@ class Raytracer:
 
         self.pixels = []
         self.items = []
+        self.light = None
+        
         self.glClear()
 
     def glClear(self):
