@@ -11,6 +11,33 @@ from functools import reduce
 V2 = namedtuple('Point2', ['x', 'y'])
 V3 = namedtuple('Point3', ['x', 'y', 'z'])
 
+def reflect(I,N):
+    return (
+        Normalizar(Resta(
+            Prodv3_other(I,-1),
+            Prodv3_other(N, 2*ProdCruz( Prodv3_other(I,-1), N ) )
+            ))
+    )
+
+def refract(I,N,index):
+    cosi = -max(-1, min(1, ProdPunto(I,N)) )
+    temp_etai = 1
+    temp_etat = index
+    if cosi < 0:
+        #dentro del objeto
+        cosi = -cosi
+        temp_etai,temp_etat = temp_etat,temp_etai #switch
+        N = Prodv3_other(N,-1)
+    eta = temp_etai/temp_etat
+    k = 1- eta**2 * (1 - cosi**2)
+    if k < 0:
+        return V3(1,0,0)
+    return Normalizar(
+        Suma(
+            Prodv3_other(I,eta),
+            Prodv3_other(N, (eta * cosi -k**(1/2)))
+        )
+    )
 
 
 def ProdCruz(a,b):
@@ -22,6 +49,13 @@ def ProdCruz(a,b):
 
 def Resta(a,b):
     return V3(a.x - b.x, a.y - b.y, a.z - b.z)
+
+def Resta_v3Other(a,b):
+    return V3(
+        a.x - b,
+        a.y - b,
+        a.z - b
+    )
 
 def Normalizar(a):
     temp = (a.x**2 + a.y**2 + a.z**2)**0.5
@@ -44,6 +78,13 @@ def Bounding(*vertices):
 
 def Suma(a,b):
     return V3(a.x + b.x, a.y + b.y, a.z + b.z)
+
+def Suma_v3Other(a,b):
+    return V3(
+        a.x + b,
+        a.y + b,
+        a.z + b
+    )
 
 def Multiplicacion(a,k):
     return V3(a.x * k, a.y * k, a.z * k)

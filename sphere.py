@@ -21,10 +21,12 @@ class Light(object):
         self.colores = clr
 
 class Materiales(object):
-    def __init__(self, diff, albedo, spec):
+    def __init__(self, diff, albedo, spec,refractive_index=1):
         self.diffuse = diff
         self.albedo = albedo
         self.spec = spec
+        self.refractive_index = refractive_index
+
 
 class Intersect(object):
   def __init__(self, distancia, point, normales):
