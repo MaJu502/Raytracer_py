@@ -100,9 +100,6 @@ class Raytracer:
                 inter = temp_hit
         return mat,inter
 
-    def reflect(self, I, N):
-        return glMatematica.Normalizar( glMatematica.Resta( glMatematica.Prodv3_other( I, -1 ), glMatematica.Prodv3_other( N,( glMatematica.ProdPunto( glMatematica.Prodv3_other( I, -1 ), N ) * 2 ) ) ) )
-    
     def cast_ray(self, origin, direction,recursiones=0):
         material, intersect = self.inteseccion(origin, direction)
         
@@ -132,7 +129,7 @@ class Raytracer:
 
         if material.albedo[3] > 0:
             refract_dir = glMatematica.refract(direction, glMatematica.Normalizar(intersect), material.refractive_index)
-            if glMatematica.ProdPunto(refract_dir, glMatematica.Normalizar(intersect)) < 0 
+            if glMatematica.ProdPunto(refract_dir, glMatematica.Normalizar(intersect)) < 0:
                 refract_orig = glMatematica.Resta(intersect.point, offset)
             else:
                  glMatematica.Suma(intersect.point, offset)
@@ -169,7 +166,7 @@ class Raytracer:
         diffuse_2 = int(material.diffuse[0] * temp_intensidad * material.albedo[0])
        
         # Specular component
-        light_reflection = self.reflect(light_dir, intersect.normales)
+        light_reflection = glMatematica.reflect(light_dir, intersect.normales)
         reflection_intensity = max(0, glMatematica.ProdPunto(light_reflection, direction))
         specular_intensity = self.light.intensity * (reflection_intensity ** material.spec)
         specular_0 = int(self.light.colores[2] * specular_intensity * material.albedo[1])

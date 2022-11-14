@@ -15,7 +15,7 @@ def reflect(I,N):
     return (
         Normalizar(Resta(
             Prodv3_other(I,-1),
-            Prodv3_other(N, 2*ProdCruz( Prodv3_other(I,-1), N ) )
+            Prodv3_other(N, 2*ProdPunto( Prodv3_other(I,-1), N ) )
             ))
     )
 
