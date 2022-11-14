@@ -56,6 +56,7 @@ class Raytracer:
         self.pixels = []
         self.items = []
         self.light = None
+        self.enviroment_map = None
 
         self.glClear()
 
@@ -107,10 +108,9 @@ class Raytracer:
             if self.enviroment_map:
                 return self.enviroment_map
             return self.background_color
-        
-        offset = glMatematica.Prodv3_other(glMatematica.Normalizar(intersect), 1.1)
+        offset = glMatematica.Prodv3_other(intersect.normales, 1.1)
 
-
+        print('hola albedo > ',material.albedo)
         if material.albedo[2] > 0:
             reverse_dir = glMatematica.Prodv3_other(direction,-1)
             reflect_dir = glMatematica.reflect(reverse_dir, glMatematica.Normalizar(intersect))

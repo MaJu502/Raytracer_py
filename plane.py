@@ -27,9 +27,9 @@ class Plane(object):
     normal = V3(0, 1, 0)
 
     return Intersect(
-      distance=d,
+      distancia=d,
       point=pt,
-      normal=normal
+      normales=normal
     )
 
 
