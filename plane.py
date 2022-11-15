@@ -13,15 +13,17 @@ from cmath import pi
 
 
 class Plane(object):
-  def __init__(self, y, material):
-    self.y = y
+  def __init__(self, center, w, h, material):
+    self.centro = center
+    self.w = w
+    self.h = h
     self.material = material
 
   def rays_intersection(self, orig, direction):
-    d = -(orig.y + self.y) / direction.y
-    pt = glMatematica.Suma(orig, glMatematica.Prodv3_other(direction, d))
+    d = (self.centro.y - orig.y) / direction.y
+    pt = glMatematica.Resta(orig, glMatematica.Prodv3_other(direction, d))
 
-    if d <= 0 or abs(pt.x) > 2 or pt.z > -5 or pt.z < -10:
+    if d <= 0 or (self.centro.x - self.w/2) > pt.x or pt.x > (self.centro.x + self.w/2) or (self.centro.z - self.h/2) > pt.z or pt.z > (self.centro.z + self.h/2):
       return None
 
     normal = V3(0, 1, 0)

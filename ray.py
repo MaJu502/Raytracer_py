@@ -110,11 +110,10 @@ class Raytracer:
             return self.background_color
         offset = glMatematica.Prodv3_other(intersect.normales, 1.1)
 
-        print('hola albedo > ',material.albedo)
         if material.albedo[2] > 0:
             reverse_dir = glMatematica.Prodv3_other(direction,-1)
-            reflect_dir = glMatematica.reflect(reverse_dir, glMatematica.Normalizar(intersect))
-            if glMatematica.ProdPunto(reflect_dir, glMatematica.Normalizar(intersect)) < 0:
+            reflect_dir = glMatematica.reflect(reverse_dir, intersect.normales)
+            if glMatematica.ProdPunto(reflect_dir, intersect.normales) < 0:
                 reflect_orig = glMatematica.Resta( intersect.point, offset )
             else: 
                 reflect_orig = glMatematica.Suma( intersect.point, offset )
@@ -128,8 +127,8 @@ class Raytracer:
 
 
         if material.albedo[3] > 0:
-            refract_dir = glMatematica.refract(direction, glMatematica.Normalizar(intersect), material.refractive_index)
-            if glMatematica.ProdPunto(refract_dir, glMatematica.Normalizar(intersect)) < 0:
+            refract_dir = glMatematica.refract(direction, intersect.normales, material.refractive_index)
+            if glMatematica.ProdPunto(refract_dir, intersect.normales) < 0:
                 refract_orig = glMatematica.Resta(intersect.point, offset)
             else:
                  glMatematica.Suma(intersect.point, offset)
@@ -147,17 +146,18 @@ class Raytracer:
         light_dist = glMatematica.largoVector( glMatematica.Resta(self.light.position, intersect.point) )
 
         #hay que definir las intensidades respecto a las sombras
-        if glMatematica.ProdPunto( light_dir, glMatematica.Normalizar(intersect)) < 0:
+        if glMatematica.ProdPunto( light_dir, intersect.normales) < 0:
             s_orig = glMatematica.Resta(intersect.point, offset)
         else:
             s_orig = glMatematica.Suma(intersect.point, offset)
-        
+
         s_mat, s_inter = self.inteseccion( s_orig, light_dir )
         s_intensity = 0 #default que puede cambiar a continuacion
-        if glMatematica.largoVector(glMatematica.Resta(s_inter.point, s_orig)) < light_dist and s_mat:
-            s_intensity = 0.6 #puede cambiar el valor segun se requiera la escena
+        if s_inter and s_mat:
+            if glMatematica.largoVector(glMatematica.Resta(s_inter.point, s_orig)) < light_dist:
+                s_intensity = 0.6 #puede cambiar el valor segun se requiera la escena
         
-        temp_intensidad = self.light.intensity * max(0, glMatematica.ProdPunto(light_dir, glMatematica.Normalizar(intersect))) * glMatematica.Resta(1-s_intensity)
+        temp_intensidad = self.light.intensity * max(0, glMatematica.ProdPunto(light_dir, intersect.normales)) * (1 - s_intensity)
         
         # Diffuse component
         #diffuse_intensity = glMatematica.ProdPunto(light_dir, intersect.normales)
