@@ -79,11 +79,11 @@ def Bounding(*vertices):
 def Suma(a,b):
     return V3(a.x + b.x, a.y + b.y, a.z + b.z)
 
-def Suma_v3Other(a,b):
+def Suma_tuplaOther(b,a):
     return V3(
-        a.x + b,
-        a.y + b,
-        a.z + b
+        a.x + b[0],
+        a.y + b[1],
+        a.z + b[2]
     )
 
 def Multiplicacion(a,k):
@@ -124,4 +124,4 @@ def multiplicarMatriz44(a,b):
                     "caso base"
                     retorno[i][x] += a[i][y] * b[y][x]
 
-    return 
+    return retorno

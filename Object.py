@@ -1,12 +1,49 @@
-"""
-Universidad del Valle de Guatemala 
-@author Marco Jurado 20308
-"""
+#cargar archivos obj
 from re import X
 import struct
+# from gl import color
 
 def color(r, g, b):
     return bytes([b, g, r])
+
+# objetos #
+class Obj(object):
+    def __init__(self, filename):
+        self.vertices = []
+        self.faces = []
+        self.vtvertex = []
+        with open(filename) as f:
+            self.lines = f.read().splitlines()
+
+
+        for line in self.lines:
+            #por cada linea del archivo obj
+            try:
+                prefix, value = line.split(' ', 1) #split para obtener el tipo de dato que es cara o vertice
+            except:
+                continue
+
+            match prefix:
+                case 'v':
+                    #vertice
+                    vertex = [float(x) for x in value.split(' ')]
+                    self.vertices.append(vertex) #guarda el vertice
+
+                case'f' :
+                    #cara
+                    caritas = [[int(x) for x in f.split('/')] for f in value.split(' ')]
+                    self.faces.append(caritas) #guarda el vertice #guarda la cara
+
+                case'vt' :
+                    #vt
+                    vt = [float(x) for x in value.split(' ')]
+                    """vt = value.strip().split(' ')
+                    for i in range(len(vt)):
+                        vt[i] = int(float(vt[i]))"""
+
+                    self.vtvertex.append(vt) #guarda el vertice #guarda la cara
+
+        #print(self.vtvertex)
 
 # texturas #
 class Texture(object):

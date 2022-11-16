@@ -4,11 +4,13 @@ Universidad del Valle de Guatemala
 """
 
 from collections import namedtuple
-from math import pi, tan
+from math import pi, tan,cos,sin
+
 import struct
 import glMatematica
 from sphere import *
 from vectors import *
+from object import Obj
 
 # char, word, double word #
 def ch(x):
@@ -58,11 +60,17 @@ class Raytracer:
         self.light = None
         self.enviroment_map = None
 
+        self.View = None
+        self.Model = None
+
         self.glClear()
 
     def glClear(self):
         self.pixels = [
             [self.background_color for x in range (self.width)] for y in range (self.height)
+        ]
+        self.zbuffer = [
+            [-float('900') for x in range(self.width)] for y in range(self.height)
         ]
 
     def glVertex(self, ingx, ingy, optColor=None):
@@ -179,6 +187,174 @@ class Raytracer:
         b = diffuse_2 + specular_2 + final_refraction_b + final_reflection_b
 
         return color(r/255,g/255,b/255)
+
+    # ------------------------------------------ cargar objetos -----------------------------------------------
+    def glTriangle(self, A,B,C, clr=None,textureP=None,cordenadasTextura=(),intensidad=1):
+        
+        minimo, maximo = glMatematica.Bounding(A, B, C)
+
+        #se debe de definir una nueva intensidad con el movimiento de las camaras
+        intensidad = glMatematica.ProdPunto(glMatematica.Normalizar( glMatematica.ProdCruz(glMatematica.Resta(B,A), glMatematica.Resta(C,A))), glMatematica.Normalizar(glMatematica.Resta(V3(0,0,0), self.light.position)))
+        intensidad = -intensidad
+        #evita llamar la funcion en el caso que la intensidad sea negativa (parte que no recibe nada de luz del modelo)
+        if intensidad < 0:
+            return
+        
+        for x in range(round(minimo.x), round(maximo.x) + 1):
+            for y in range(round(minimo.y), round(maximo.y) + 1):
+                w, v, u = coordenadasbaricentricas(A, B, C, V2(x, y))
+                if w < 0 or v < 0 or u < 0:  # 0 is actually a valid value! (it is on the edge)
+                    continue
+            
+                # ahora se cargan las texturas con las coordenadas y la intensidad correspondiente
+                if textureP:
+                    # si tiene texturas
+                    cordA, cordB, cordC = cordenadasTextura
+                    tempX = cordA.x * w + cordB.x * v + cordC.x *u
+                    tempY = cordA.y * w + cordB.y * v + cordC.y *u
+
+                    clr = textureP.get_color(tempX,tempY, intensidad) # se modifica el color a pintar para ser el correspondiente a la textura
+
+                z = A.z * w + B.z * v + C.z * u
+
+                if x > 0 and x < len(self.zbuffer) and y > 0 and y < len(self.zbuffer[0]):
+                    if z > self.zbuffer[x][y]:
+                        self.glVertex(x, y, clr)
+                        self.zbuffer[x][y] = z
+
+
+    def LoadModel(self,filename,translation=(0, 0, 0),scale=(1, 1, 1), rotation=(0,0,0), textureP=None):
+        # cargar modelo con texturas
+        self.loadModelMatrix(translation,scale,rotation)
+        model = Obj(filename)
+        luz = V3(0,0,1)
+        for x in model.faces:
+            #cada cara
+            temp_vertices = len(x)
+            if temp_vertices == 3:
+                cara1 = x[0][0] - 1
+                cara2 = x[1][0] - 1
+                cara3 = x[2][0] - 1
+
+                a = self.transformar(model.vertices[cara1])
+                b = self.transformar(model.vertices[cara2])
+                c = self.transformar(model.vertices[cara3])
+                
+                norm = glMatematica.Normalizar( glMatematica.ProdCruz( glMatematica.Resta(b,a) , glMatematica.Resta(c,a) ) )
+                
+                intensidad = glMatematica.ProdPunto( norm, luz )
+                grises = round(intensidad)
+
+                if not textureP:
+                    # si el modelo no cuenta con texturas
+                    if grises < 0:
+                        continue
+
+                    self.glTriangle(a, b, c, color( grises,grises,grises ))
+                
+                else: 
+                    # si tiene texturas entonces buscamos A B C de las texturas para los triangulos
+                    Textura_A = V2(*model.vtvertex[(x[0][1] - 1)])
+                    Textura_B = V2(*model.vtvertex[(x[1][1] - 1)])
+                    Textura_C = V2(*model.vtvertex[(x[2][1] - 1)])
+
+                    #ahora se dibuja el triangulo
+                    self.glTriangle(a,b,c,textureP=textureP, cordenadasTextura=(Textura_A, Textura_B, Textura_C), intensidad=intensidad)
+
+            if temp_vertices == 4:
+                cara1 = x[0][0] - 1
+                cara2 = x[1][0] - 1
+                cara3 = x[2][0] - 1
+                cara4 = x[3][0] - 1
+
+
+                a = self.transformar(model.vertices[cara1])
+                b = self.transformar(model.vertices[cara2])
+                c = self.transformar(model.vertices[cara3])
+                d = self.transformar(model.vertices[cara4])
+
+                
+                norm = glMatematica.Normalizar( glMatematica.ProdCruz( glMatematica.Resta(a, b),  glMatematica.Resta(b, c) ) )
+                intensidad = glMatematica.ProdPunto( norm, luz )
+                grises = (intensidad)
+
+                if not textureP:
+                    # si el modelo no cuenta con texturas
+                    if grises < 0:
+                        continue
+
+                    self.glTriangle(a, b, c, color( grises,grises,grises ))
+                    self.glTriangle(a, c, d, color( grises,grises,grises ))
+                
+                else: 
+                    # si tiene texturas entonces buscamos A B C de las texturas para los triangulos
+                    Textura_A = V2(*model.vtvertex[(x[0][1] - 1)])
+                    Textura_B = V2(*model.vtvertex[(x[1][1] - 1)])
+                    Textura_C = V2(*model.vtvertex[(x[2][1] - 1)])
+                    Textura_D = V2(*model.vtvertex[(x[3][1] - 1)])
+
+                    #print('hola1', Textura_A,Textura_B,Textura_C, Textura_D)
+
+                    #ahora se dibuja el triangulo
+                    self.glTriangle(a,b,c,textureP=textureP, cordenadasTextura=(Textura_A, Textura_B, Textura_C), intensidad=intensidad)
+                    self.glTriangle(a,c,d,textureP=textureP, cordenadasTextura=(Textura_A, Textura_C, Textura_D), intensidad=intensidad)
+    
+    def lookAT(self, eye, center, up):
+        z = ( glMatematica.Normalizar( glMatematica.Resta(eye,center) ) )
+        x = ( glMatematica.Normalizar( glMatematica.ProdCruz(up, z) ) )
+        y = ( glMatematica.Normalizar( glMatematica.ProdCruz(z,x) ) )
+        self.loadViewMatrix(x, y, z, center)
+        self.loadProjectionMatrix(-1/glMatematica.largoVector( glMatematica.Resta(eye,center) ))
+        self.loadViewportMatrix()
+
+    def loadViewMatrix(self, x, y, z, center):
+        Matriz1 = ([[x.x, x.y, x.z,  0], [y.x, y.y, y.z, 0], [z.x, z.y, z.z, 0], [0, 0, 0, 1]])
+        Matriz2 = ([[1, 0, 0, -center.x], [0, 1, 0, -center.y], [0, 0, 1, -center.z], [0, 0, 0, 1]])
+        self.View = glMatematica.multiplicarMatriz44(Matriz1, Matriz2)
+
+    def loadProjectionMatrix(self, coeff):
+        self.Projection = ([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, coeff, 1]])
+
+    def loadViewportMatrix(self, x = 0, y = 0):
+        self.Viewport = ([[self.width/2, 0, 0, x + self.width/2], [0, self.height/2, 0, y + self.height/2], [0, 0, 128, 128], [0, 0, 0, 1]])
+
+    def loadModelMatrix(self, translate=(0, 0, 0), scale=(1, 1, 1), rotate=(0, 0, 0)):
+        translate = V3(*translate)
+        scale = V3(*scale)
+        rotate = V3(*rotate)
+        
+        translation_matrix = [[1, 0, 0, translate.x], [0, 1, 0, translate.y], [0, 0, 1, translate.z], [0, 0, 0,1]]
+        scale_matrix = [[scale.x, 0, 0, 0], [0, scale.y, 0, 0], [0, 0, scale.z, 0], [0, 0, 0, 1]]
+    
+        rotar_matrizX = [[1, 0, 0, 0], [0, cos(rotate.x), -sin(rotate.x), 0], [0, sin(rotate.x),  cos(rotate.x), 0],[0, 0, 0, 1]]
+        rotar_matrizY = [[cos(rotate.y), 0, sin(rotate.y), 0],[0, 1, 0, 0], [-sin(rotate.y), 0, cos(rotate.y), 0], [0, 0, 0, 1]]
+        rotar_matrizZ = [[cos(rotate.z), -sin(rotate.z), 0, 0], [sin(rotate.z),  cos(rotate.z), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+
+        "con las matrices de x,y,z se puede obtener la matriz de rotacion al multiplicarlas"
+        rotation_matrix = glMatematica.multiplicarMatriz44(rotar_matrizX, glMatematica.multiplicarMatriz44(rotar_matrizY, rotar_matrizZ))
+
+        self.Model = glMatematica.multiplicarMatriz44(translation_matrix, glMatematica.multiplicarMatriz44(rotation_matrix, scale_matrix))
+
+    def transformar(self, v):
+        tempVertices = [v[0] , v[1], v[2], 1]
+
+        "sustituyendo el uso de numpy para multiplicar estas matrices se reailza lo siguiente"
+
+        temp1 = glMatematica.multiplicarMatriz44(self.Viewport, self.Projection)
+        temp2 = glMatematica.multiplicarMatriz44(temp1, self.View)
+        temp3 = glMatematica.multiplicarMatriz44(temp2, self.Model)
+        temp4 = glMatematica.multiplicarMatriz44(temp3, [ [x] for x in tempVertices ])
+        temp4 = [[i[0] for i in temp4]]
+
+        tranformed_vertex = temp4[0]
+
+        tranformed_vertex = [
+        (tranformed_vertex[0]/tranformed_vertex[3]), 
+        (tranformed_vertex[1]/tranformed_vertex[3]), 
+        (tranformed_vertex[2]/tranformed_vertex[3])
+        ]
+
+        return V3(*tranformed_vertex)
 
     def glFinish(self,filename):
         op = open(filename, 'bw')
