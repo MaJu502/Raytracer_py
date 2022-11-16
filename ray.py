@@ -139,7 +139,7 @@ class Raytracer:
             if glMatematica.ProdPunto(refract_dir, intersect.normales) < 0:
                 refract_orig = glMatematica.Resta(intersect.point, offset)
             else:
-                 glMatematica.Suma(intersect.point, offset)
+                refract_orig = glMatematica.Suma(intersect.point, offset)
 
             refract_color = self.cast_ray(refract_orig, refract_dir, recursiones + 1)
         else:
@@ -250,7 +250,7 @@ class Raytracer:
                     if grises < 0:
                         continue
 
-                    self.glTriangle(a, b, c, color( grises,grises,grises ))
+                    self.glTriangle(a, b, c, color( 85/255,grises,47/255 ))
                 
                 else: 
                     # si tiene texturas entonces buscamos A B C de las texturas para los triangulos
@@ -276,15 +276,15 @@ class Raytracer:
                 
                 norm = glMatematica.Normalizar( glMatematica.ProdCruz( glMatematica.Resta(a, b),  glMatematica.Resta(b, c) ) )
                 intensidad = glMatematica.ProdPunto( norm, luz )
-                grises = (intensidad)
+                grises = (intensidad) - 0.2
 
                 if not textureP:
                     # si el modelo no cuenta con texturas
                     if grises < 0:
                         continue
 
-                    self.glTriangle(a, b, c, color( grises,grises,grises ))
-                    self.glTriangle(a, c, d, color( grises,grises,grises ))
+                    self.glTriangle(a, b, c, color( 85/255,grises,47/255 ))
+                    self.glTriangle(a, c, d, color( 85/255,grises,47/255 ))
                 
                 else: 
                     # si tiene texturas entonces buscamos A B C de las texturas para los triangulos

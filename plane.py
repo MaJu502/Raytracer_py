@@ -43,7 +43,10 @@ class Plane_cubes(object):
     self.material = material
 
   def rays_intersection(self, orig, direction):
-    t = glMatematica.ProdPunto( glMatematica.Resta(self.centro, orig), self.normal) / glMatematica.ProdPunto( direction, self.normal)
+    if glMatematica.ProdPunto( direction, self.normal) == 0:
+      t = glMatematica.ProdPunto( glMatematica.Resta(self.centro, orig), self.normal)
+    else:
+      t = glMatematica.ProdPunto( glMatematica.Resta(self.centro, orig), self.normal) / glMatematica.ProdPunto( direction, self.normal)
     if t > 0:
       pt = glMatematica.Suma(orig, glMatematica.Prodv3_other(direction,t))
 
